@@ -94,7 +94,7 @@ data = [
     {
         'Account type': 'AV : Assurance-vie',
         'Platform': 'BoursoBank',
-        'Account management fees (%)': 0.75,
+        'Platform account management fees (%)': 0.75,
         'Investment support': 'ISHARES MSCI WORLD SRI-EUR-A IE00BYX2JD69',
         'Investment support fees (%)': 0.20,
         'Capital gain tax (%)': life_insurance_withdraw_tax,
@@ -103,7 +103,8 @@ data = [
     },
     {
         'Account type': 'PER : Plan Epargne Retraite',
-        'Platform': 'BoursoBank', 'Account management fees (%)': 0.50,
+        'Platform': 'BoursoBank',
+        'Platform account management fees (%)': 0.50,
         'Investment support': '70% ISHARES MSCI USA ESG ENHANCED UCITS ETF USD (ACC) + 30% ISHARES MSCI EUROPE ESG ENHANCED UCITS ETF EUR (ACC)',
         'Investment support fees (%)': 0.085,
         'Capital gain tax (%)': flat_tax,
@@ -113,7 +114,7 @@ data = [
     {
         'Account type': 'PEA : Plan Epargne Actions',
         'Platform': 'BoursoBank',
-        'Account management fees (%)': 0,
+        'Platform account management fees (%)': 0,
         'Investment support': 'iShares MSCI World Swap PEA UCITS ETF',
         'Investment support fees (%)': 0.25,
         'Capital gain tax (%)': social_security_tax,
@@ -123,7 +124,7 @@ data = [
     {
         'Account type': 'CTO : Compte Titre Ordinaire',
         'Platform': 'Interactive Brokers',
-        'Account management fees (%)': 0,
+        'Platform account management fees (%)': 0,
         'Investment support': 'Amundi Prime Global UCITS ETF DR (C)',
         'Investment support fees (%)': 0.05,
         'Capital gain tax (%)': flat_tax,
@@ -135,10 +136,10 @@ data = [
 compensatory_per_investment = st.selectbox('Selection of compensation investment for PER',
                                            ['PEA : Plan Epargne Actions'])
 
-st.data_editor(data)
+# st.data_editor(data)
 
 df = pd.DataFrame(data)
-df['Total annual fees (%)'] = df['Account management fees (%)'] + df['Investment support fees (%)']
+df['Total annual fees (%)'] = df['Platform account management fees (%)'] + df['Investment support fees (%)']
 df['Annual return (after fees) (%)'] = annual_investment_performance - df['Total annual fees (%)']
 df[f'Account value after {investment_duration} years (€)'] = df['Annual return (after fees) (%)'].apply(
     lambda x: initial_investment * ((1 + x / 100) ** investment_duration))
@@ -150,6 +151,30 @@ df['Total final net value (€)'] = df['Value after taxes (€)'] + df['PER tax 
 df['Total final net ROE (%)'] = (df['Total final net value (€)'] - initial_investment) / initial_investment * 100
 
 df = df.pivot_table(columns='Account type', aggfunc='first')
-df.reindex(['Platform', 'Account management fees (%)', 'Investment support', 'Investment support fees (%)'])
-df = df.sort_index(ascending=False)
-st.dataframe(df)
+
+df = df.reindex(labels=[
+    # 'Account type',
+    'Platform',
+
+    'Platform account management fees (%)',
+    'Investment support',
+    'Investment support fees (%)',
+    'Total annual fees (%)',
+
+    'Annual return (after fees) (%)',
+    f'Account value after {investment_duration} years (€)',
+
+    'Capital gain tax (%)',
+    'Capital gain tax (€)',
+    'Income tax (€)',
+    'Value after taxes (€)',
+
+    'PER tax rebate invested net value (€)',
+    'Total final net value (€)',
+    'Total final net ROE (%)'
+
+])
+
+st.table(df)
+
+st.dataframe(df, use_container_width=True)
